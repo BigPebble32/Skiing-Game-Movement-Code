@@ -1,0 +1,59 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BoardPhysics : MonoBehaviour
+{
+    Rigidbody rb;
+    [Header("Movement and Torque")]
+    public float mult;
+    public float moveForce;
+    public float turnTorque;
+
+
+    [Header("Jumping")]
+    public float jumpForce;
+    private bool isGrounded;
+    public LayerMask groundLayer;
+    public float raycastDistance = 0.6f;
+
+    private bool isisGrounded;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
+
+    public Transform[] anchors = new Transform[4];
+    public RaycastHit[] hits = new RaycastHit[4];
+    void Update()
+    {
+        if (Physics.Raycast(transform.position, Vector3.down, raycastDistance, groundLayer))
+            isisGrounded = true;
+        else
+            isisGrounded = false;
+    }
+    void FixedUpdate()
+    {
+        for (int i = 0; i < 4; i++)
+            ApplyF(anchors[i], hits[i]);
+
+        rb.AddForce(Input.GetAxis("Vertical") * moveForce * transform.forward);
+        rb.AddTorque(Input.GetAxis("Horizontal") * turnTorque * transform.up);
+        if (Input.GetButtonDown("Jump") && isisGrounded)
+        {
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        }
+
+    }
+
+    void ApplyF(Transform anchor, RaycastHit hit)
+    {
+        if (Physics.Raycast(anchor.position, -anchor.up, out hit))
+        {
+            float force = 0;
+            force = Mathf.Abs(1 / (hit.point.y - anchor.position.y));
+            rb.AddForceAtPosition(transform.up * force * mult, anchor.position, ForceMode.Acceleration);
+        }
+    }
+}
